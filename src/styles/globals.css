@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root { color-scheme: dark; }
+  html { background: #09090b; scroll-behavior: smooth; }
+  body {
+    min-width: 320px;
+    background: #09090b;
+    color: #f4f4f5;
+    font-family: 'Manrope', sans-serif;
+  }
+
+  ::selection { background: #22D3EE; color: #18181b; }
+  a, button { -webkit-tap-highlight-color: transparent; }
+}
+
+@layer components {
+  .page-surface {
+    background: radial-gradient(circle at 50% -20%, rgba(34, 211, 238, 0.13), transparent 34rem), #18181b;
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #22D3EE;
+    font-size: 0.72rem;
+  }
+}
+
+.black-222 {
+    background-color: #18181b;
+}
+
+.black-333 {
+    background-color: #27272a;
+}
+
+.black-1a1 {
+    background-color: #1a1a1a;
+}
