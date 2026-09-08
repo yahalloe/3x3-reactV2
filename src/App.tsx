@@ -6,6 +6,8 @@ import { NotFound } from "./pages/NotFound";
 import { Romcom } from "./pages/Romcom";
 import { Drama } from "./pages/Drama";
 import { Music } from "./pages/Music";
+import { CollectionPage } from "./pages/Collection";
+import { Admin } from "./pages/Admin";
 import { ScrollToTop } from "./components/utils/ScrollToTop";
 
 function App() {
@@ -22,6 +24,10 @@ function App() {
         <Route path="/drama" element={<Drama />} />
 
         <Route path="/music" element={<Music />} />
+
+        <Route path="/collection/:slug" element={<CollectionPage />} />
+
+        <Route path="/admin" element={<Admin />} />
 
         <Route path="/about" element={<About />} />
 

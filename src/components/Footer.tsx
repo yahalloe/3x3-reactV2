@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
+import { useContent } from "../content/ContentProvider";
 
 interface FallbackLinkProps {
   primaryUrl: string;
@@ -60,6 +61,7 @@ export const FallbackLink: React.FC<FallbackLinkProps> = ({
 };
 
 export function Footer() {
+  const { settings } = useContent();
   return (
     <footer className="bg-zinc-950">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-9 sm:flex-row sm:items-center sm:justify-between sm:px-8">
@@ -68,7 +70,7 @@ export function Footer() {
             YAHALLOE'S 3×3
           </p>
           <p className="mt-2 text-xs text-zinc-500">
-            © 2023–2026 · Made for the stories worth revisiting.
+            {settings.footerText}
           </p>
         </div>
         <nav

@@ -1,10 +1,12 @@
 import { Link, NavLink } from "react-router-dom";
+import { useContent } from "../content/ContentProvider";
 
 interface HeaderProps {
   title: string;
 }
 
 export function Header({ title }: HeaderProps) {
+  const { settings } = useContent();
   return (
     <header className="border-b border-white/10 bg-zinc-950">
       <div className="mx-auto max-w-6xl px-5 py-5 sm:px-8">
@@ -22,7 +24,7 @@ export function Header({ title }: HeaderProps) {
           </nav>
         </div>
         <div className="pt-14 pb-7 sm:pt-20 sm:pb-10">
-          <p className="section-label mb-4">A personal anime archive · est. 2023</p>
+          <p className="section-label mb-4">{settings.archiveLabel}</p>
           <h1 className="max-w-4xl text-5xl font-extrabold tracking-[-0.065em] text-zinc-100 sm:text-7xl md:text-8xl">{title}</h1>
           <div className="mt-7 h-px w-full bg-gradient-to-r from-cyan-400 via-cyan-400/25 to-transparent" />
         </div>
