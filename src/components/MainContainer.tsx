@@ -1,16 +1,21 @@
 import { Link } from "react-router-dom";
 import type { Anime } from "../content/ContentProvider";
 import { useJikanAnime } from "../lib/useJikanAnime";
+import { boardPositions } from "../lib/adminModel";
 
 interface MainContainerProps {
   list: Anime[];
 }
 
 export function MainContainer({ list }: MainContainerProps) {
+  const { slots, overflow } = boardPositions(list);
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4">
-        {list.map((anime, index) => <AnimeCard key={`${anime.id}:${index}`} anime={anime} index={index} />)}
+        {slots.map((anime, index) => {
+          return anime ? <AnimeCard key={`${anime.id}:${index}`} anime={anime} index={index} /> : <div key={`empty-${index}`} className="hidden aspect-square place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-xs text-zinc-600 md:grid" aria-label={`Empty position ${index + 1}`}>To be discovered</div>;
+        })}
+        {overflow.map((anime, index) => <AnimeCard key={`${anime.id}:overflow:${index}`} anime={anime} index={anime.sortOrder} />)}
       </div>
     </div>
   );

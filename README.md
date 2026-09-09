@@ -1,5 +1,15 @@
 # Yahalloe's 3×3
 
+## Editor navigation
+
+The editor has Anime, Collections, Comments, Site copy, and Account tabs. Anime search shows cover-image suggestions while typing, with a Kitsu fallback when Jikan is unavailable. The image library filters existing shows without scrolling through the full editor.
+
+Choose anime and collection positions with the 3×3 picker. Occupied positions are disabled; an anime can keep its own position. Anime saves recheck current database occupancy before writing. Empty positions remain visible on the desktop public grid, and older duplicate/out-of-range entries remain visible until repositioned.
+
+Comments edits the existing per-show `editor_note`: one personal comment per show, with a composer, preview, and Ctrl/Cmd+Enter saving. Comments display on public anime pages, and metadata saves preserve them. No new database migration is required. Save notifications show progress, success, and errors.
+
+Account lets the signed-in editor change their own password by verifying the current password and confirming a new password. Supabase's configured password rules still apply. Passwords are not stored in the app's content tables.
+
 ## Jikan anime data
 
 Public anime cards and detail pages load cover images and full synopses from [Jikan v4](https://docs.api.jikan.moe/), with no API key required. Existing local or Supabase content is shown while loading and remains the fallback if Jikan is unavailable or an image fails to load. Editor notes and CMS content are preserved.

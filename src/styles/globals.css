@@ -13,6 +13,10 @@
 
   ::selection { background: #22D3EE; color: #18181b; }
   a, button { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled), a[href], select, summary, input[type="checkbox"] { cursor: pointer; }
+  button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; }
+  button:disabled { opacity: 0.5; }
+  input[type="checkbox"] { accent-color: #67e8f9; }
 }
 
 @layer components {
@@ -41,6 +45,18 @@
 
   .admin-button {
     @apply w-fit rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-4 focus-visible:ring-offset-zinc-900;
+  }
+  .editor-columns {
+    @apply grid items-start gap-5 lg:grid-cols-[280px_minmax(0,1fr)];
+  }
+  .editor-label {
+    @apply block text-sm font-medium text-zinc-300;
+  }
+  .editor-text-button {
+    @apply text-sm font-medium text-cyan-300 transition hover:text-cyan-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300;
+  }
+  .editor-secondary-button {
+    @apply inline-flex w-fit items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-cyan-300/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300;
   }
 }
 

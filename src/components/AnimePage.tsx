@@ -39,7 +39,7 @@ export function AnimePage() {
               <p className="mt-3 whitespace-pre-line text-lg leading-8 text-zinc-200 sm:text-xl">{jikan?.synopsis ?? anime.synopsis}</p>
               {jikan?.synopsis && <a className="mt-3 inline-block text-xs text-cyan-300 hover:underline" href={`https://myanimelist.net/anime/${jikan.malId}`} target="_blank" rel="noreferrer">Synopsis from MyAnimeList via Jikan ↗</a>}
             </div>
-            {anime.editorNote && <div className="mt-9 border-t border-white/10 pt-7 text-base leading-7 text-zinc-400 sm:text-lg">{anime.editorNote}</div>}
+            {anime.editorNote && <section className="mt-9 rounded-2xl border border-white/10 bg-zinc-950/40 p-5"><div className="mb-3 flex items-center gap-3"><span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-cyan-300/15 text-sm font-bold text-cyan-300">Y</span><div><p className="text-sm font-bold text-zinc-200">Yahallo</p><p className="text-xs text-cyan-300">My take on this show</p></div></div><div className="whitespace-pre-wrap break-words border-l border-white/10 pl-4 text-base leading-7 text-zinc-400">{anime.editorNote}</div></section>}
             <section className="mt-9 border-t border-white/10 pt-7">
               <p className="font-mono text-xs uppercase tracking-[0.16em] text-cyan-300">Watch now</p>
               {anime.streamingProviders.length ? (

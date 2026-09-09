@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Home } from "./pages/Home";
 import { AnimePage } from "./components/AnimePage";
@@ -7,8 +8,9 @@ import { Romcom } from "./pages/Romcom";
 import { Drama } from "./pages/Drama";
 import { Music } from "./pages/Music";
 import { CollectionPage } from "./pages/Collection";
-import { Admin } from "./pages/Admin";
 import { ScrollToTop } from "./components/utils/ScrollToTop";
+
+const Admin = lazy(() => import("./pages/Admin").then((module) => ({ default: module.Admin })));
 
 function App() {
   return (
@@ -27,7 +29,7 @@ function App() {
 
         <Route path="/collection/:slug" element={<CollectionPage />} />
 
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<Suspense fallback={<p role="status" className="page-surface min-h-screen p-8 text-zinc-300">Opening editor…</p>}><Admin /></Suspense>} />
 
         <Route path="/about" element={<About />} />
 

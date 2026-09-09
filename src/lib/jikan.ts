@@ -1,4 +1,4 @@
-import { searchKitsuAnime } from "./kitsu";
+import { searchKitsuAnime } from "./kitsu.ts";
 
 const API_URL = "https://api.jikan.moe/v4";
 const CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -127,10 +127,7 @@ export async function searchJikanAnime(query: string, signal?: AbortSignal): Pro
   let response: { data?: ApiAnime[] };
   try {
     // An editor search has a fallback, so don't repeat a failing upstream call.
-    response = await request(
-  `/anime?q=${encodeURIComponent(trimmed)}`,
-  signal,
-) as { data?: ApiAnime[] };
+    response = await request(`/anime?q=${encodeURIComponent(trimmed)}`, signal, 1) as { data?: ApiAnime[] };
   } catch (error) {
     signal?.throwIfAborted();
     if (error instanceof Error && /\(4\d\d\)/.test(error.message) && !error.message.includes("429")) throw error;
@@ -209,4 +206,3 @@ export function getJikanAnime(slug: string, title: string): Promise<JikanAnime |
   pending.set(key, task);
   return task;
 }
-
