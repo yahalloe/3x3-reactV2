@@ -12,6 +12,10 @@ const catalogIds: Record<string, number> = {
   saekano: 23277, tamako: 21647, nisekoi: 18897, kaguyasama: 37999,
   goldenTime: 17895, makeine: 57524, erased: 31043, maomao: 54492,
   sakuraSou: 13759, rere: 34561,
+  "made-in-abyss": 34599, "hunter-x-hunter": 11061, "bunny-girl-senpai": 37450,
+  "86-eighty-six": 41457, "the-dangers-in-my-heart": 52578,
+  "tamako-love-story": 21647, "kaguya-sama": 37999, "golden-time": 17895,
+  "the-apothecary-diaries": 54492, sakurasou: 13759, "re-creators": 34561,
 };
 
 export interface JikanAnime {
@@ -179,7 +183,7 @@ export function getJikanAnime(slug: string, title: string): Promise<JikanAnime |
       } else {
         const result = await request(`/anime?q=${encodeURIComponent(title)}`) as { data?: ApiAnime[] };
         // New CMS entries require an exact title/alias match to avoid wrong shows.
-        anime = result.data?.find((item) => [item.title, ...(item.titles ?? []).map((alias) => alias.title)]
+        anime = result.data?.find((item) => [item.title, item.title_english, ...(item.titles ?? []).map((alias) => alias.title)]
           .some((alias) => alias && normalizeTitle(alias) === normalizeTitle(title)));
       }
       const data: JikanAnime | null = anime && Number.isInteger(anime.mal_id) ? {

@@ -29,8 +29,8 @@ export function AnimeLibrary({ anime, selectedId, onSelect, onNew }: { anime: An
   return <aside className="admin-panel min-w-0 self-start p-3!">
     <div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm!">Your shows <span className="ml-1 font-normal text-zinc-500">{anime.length}</span></h2>{onNew && <button type="button" className="editor-text-button" onClick={onNew}>+ Add anime</button>}</div>
     <label className="sr-only" htmlFor={id}>Filter your shows</label><input id={id} className="admin-input mb-3 text-sm" type="search" value={query} placeholder="Filter your shows…" onChange={(event) => setQuery(event.target.value)} />
-    <div className="grid max-h-56 gap-1 overflow-y-auto pr-1 lg:max-h-[calc(100dvh-19rem)]">
-      {matches.map((entry, index) => <button type="button" key={`${entry.id}:${index}`} aria-pressed={selectedId === entry.id} onClick={() => onSelect(entry)} className={`flex items-center gap-3 rounded-xl p-2 text-left transition ${selectedId === entry.id ? "bg-cyan-300/10 ring-1 ring-inset ring-cyan-300/40" : "hover:bg-white/5"}`}>
+    <div className="flex gap-2 overflow-x-auto pb-2 lg:grid lg:max-h-[calc(100dvh-19rem)] lg:overflow-y-auto lg:pr-1">
+      {matches.map((entry, index) => <button type="button" key={`${entry.id}:${index}`} aria-pressed={selectedId === entry.id} onClick={() => onSelect(entry)} className={`flex w-56 shrink-0 items-center gap-3 rounded-xl p-2 text-left transition lg:w-auto ${selectedId === entry.id ? "bg-cyan-300/10 ring-1 ring-inset ring-cyan-300/40" : "hover:bg-white/5"}`}>
         <Cover src={entry.cardImageUrl} title="" className="h-14 w-10 shrink-0 rounded-md" /><span className="min-w-0"><span className="line-clamp-2 text-sm font-semibold">{entry.title}</span><span className="mt-1 block text-[11px] capitalize text-zinc-500">{entry.collectionSlug} · {entry.isPublished ? "Published" : "Draft"}</span></span>
       </button>)}
       {!matches.length && <p className="px-2 py-5 text-sm text-zinc-500">No shows match your search.</p>}

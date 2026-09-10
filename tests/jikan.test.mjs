@@ -26,6 +26,17 @@ test('Jikan catalog, caching, search and failure behavior', async (t) => {
     assert.equal(calls, 1);
     assert.equal(storage.size, 1);
   });
+  await t.test('CMS slugs resolve directly to the same catalog IDs as legacy routes', async () => {
+    let calls = 0;
+    globalThis.fetch = async (url) => {
+      calls++;
+      assert.equal(url, 'https://api.jikan.moe/v4/anime/34599');
+      return Response.json({ data: item(34599, 'Made in Abyss') });
+    };
+    assert.equal((await getJikanAnime('made-in-abyss', 'Made in Abyss')).malId, 34599);
+    assert.equal((await getJikanAnime('madeInAbyss1', 'Made in Abyss')).malId, 34599);
+    assert.equal(calls, 1);
+  });
   await t.test('skips placeholders and empty titles', async () => {
     globalThis.fetch = () => { throw new Error('Unexpected request'); };
     assert.equal(await getJikanAnime('dunno', 'Dunno'), null);

@@ -11,9 +11,9 @@ export function MainContainer({ list }: MainContainerProps) {
   const { slots, overflow } = boardPositions(list);
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {slots.map((anime, index) => {
-          return anime ? <AnimeCard key={`${anime.id}:${index}`} anime={anime} index={index} /> : <div key={`empty-${index}`} className="hidden aspect-square place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-xs text-zinc-600 md:grid" aria-label={`Empty position ${index + 1}`}>To be discovered</div>;
+          return anime ? <AnimeCard key={`${anime.id}:${index}`} anime={anime} index={index} /> : <div key={`empty-${index}`} className="grid aspect-square place-items-center rounded-xl p-2 text-center sm:rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-xs text-zinc-600 md:grid" aria-label={`Empty position ${index + 1}`}>To be discovered</div>;
         })}
         {overflow.map((anime, index) => <AnimeCard key={`${anime.id}:overflow:${index}`} anime={anime} index={anime.sortOrder} />)}
       </div>
@@ -36,9 +36,9 @@ function AnimeCard({ anime, index }: { anime: Anime; index: number }) {
               className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/10 to-transparent opacity-80 transition group-hover:opacity-100" />
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4">
-              <h2 className="max-w-[80%] text-base font-bold tracking-tight text-white sm:text-lg">{anime.title}</h2>
-              <span className="font-mono text-xs text-cyan-300">0{index + 1}</span>
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 p-2 sm:gap-3 sm:p-4">
+              <h2 className="line-clamp-2 min-w-0 text-[10px] leading-tight font-bold sm:max-w-[80%] tracking-tight text-white sm:text-lg">{anime.title}</h2>
+              <span className="hidden font-mono text-xs text-cyan-300 sm:block">0{index + 1}</span>
             </div>
           </Link>
   );

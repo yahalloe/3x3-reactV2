@@ -6,6 +6,7 @@ import { Footer } from "./Footer";
 import { NotFound } from "../pages/NotFound";
 import { useContent } from "../content/ContentProvider";
 import { useJikanAnime } from "../lib/useJikanAnime";
+import { AnimeArtwork } from "./AnimeArtwork";
 
 export function AnimePage() {
   const { id } = useParams();
@@ -20,18 +21,7 @@ export function AnimePage() {
       <Header title={anime.title} />
       <main className="page-surface min-h-[60vh]">
         <article className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] lg:gap-14">
-          <div className="relative overflow-hidden rounded-2xl bg-zinc-900 shadow-2xl shadow-black/30">
-            <img
-              src={jikan?.imageUrl ?? anime.detailImageUrl}
-              onError={(event) => {
-                if (event.currentTarget.getAttribute("src") !== anime.detailImageUrl) event.currentTarget.src = anime.detailImageUrl;
-              }}
-              alt={anime.title}
-              title={anime.title}
-              className="max-h-[70vh] w-full object-contain"
-            />
-            <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
-          </div>
+          <AnimeArtwork key={anime.id} title={anime.title} sources={[jikan?.imageUrl, anime.detailImageUrl, anime.cardImageUrl]} />
           <div className="flex flex-col justify-center">
             <p className="section-label mb-5">Archive entry</p>
             <div className="border-l-2 border-cyan-400 pl-5">
@@ -39,7 +29,7 @@ export function AnimePage() {
               <p className="mt-3 whitespace-pre-line text-lg leading-8 text-zinc-200 sm:text-xl">{jikan?.synopsis ?? anime.synopsis}</p>
               {jikan?.synopsis && <a className="mt-3 inline-block text-xs text-cyan-300 hover:underline" href={`https://myanimelist.net/anime/${jikan.malId}`} target="_blank" rel="noreferrer">Synopsis from MyAnimeList via Jikan ↗</a>}
             </div>
-            {anime.editorNote && <section className="mt-9 rounded-2xl border border-white/10 bg-zinc-950/40 p-5"><div className="mb-3 flex items-center gap-3"><span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-cyan-300/15 text-sm font-bold text-cyan-300">Y</span><div><p className="text-sm font-bold text-zinc-200">Yahallo</p><p className="text-xs text-cyan-300">My take on this show</p></div></div><div className="whitespace-pre-wrap break-words border-l border-white/10 pl-4 text-base leading-7 text-zinc-400">{anime.editorNote}</div></section>}
+            {anime.editorNote && <p className="mt-9 whitespace-pre-wrap break-words text-base leading-8 text-zinc-300">{anime.editorNote}</p>}
             <section className="mt-9 border-t border-white/10 pt-7">
               <p className="font-mono text-xs uppercase tracking-[0.16em] text-cyan-300">Watch now</p>
               {anime.streamingProviders.length ? (
