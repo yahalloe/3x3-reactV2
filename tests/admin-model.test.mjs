@@ -1,6 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardPositions, firstFreePosition, passwordValidation, positionIsAvailable } from '../src/lib/adminModel.ts';
+import { boardPositions, collectionPositions, firstFreePosition, passwordValidation, positionIsAvailable } from '../src/lib/adminModel.ts';
+
+test('collection board excludes homepage and maps the first shelf to top left', () => {
+  const stored = ['favorites', 'romcom', 'drama', 'music'].map((slug, sortOrder) => ({id:slug,slug,sortOrder}));
+  const shelves = collectionPositions(stored);
+  assert.deepEqual(shelves.map(({slug,sortOrder}) => [slug,sortOrder]), [['romcom',0],['drama',1],['music',2]]);
+  assert.equal(positionIsAvailable(shelves, 0, 'romcom'), true);
+  assert.equal(positionIsAvailable(shelves, 1, 'romcom'), false);
+  assert.equal(firstFreePosition(shelves), 3);
+  assert.equal(stored[1].sortOrder, 1);
+});
 
 test('occupied positions are blocked but an anime can retain its own position', () => {
   const items = [{ id: 'a', sortOrder: 0 }, { id: 'b', sortOrder: 4 }];

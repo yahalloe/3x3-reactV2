@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { Anime } from "../../content/ContentProvider";
 import { positionIsAvailable } from "../../lib/adminModel";
 
@@ -25,11 +25,28 @@ export function SectionTitle({ title, children }: { title: string; children?: Re
 export function AnimeLibrary({ anime, selectedId, onSelect, onNew }: { anime: Anime[]; selectedId: string; onSelect: (entry: Anime) => void; onNew?: () => void }) {
   const id = useId();
   const [query, setQuery] = useState("");
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = scroller.current;
+    if (!list) return;
+    const fit = () => {
+      if (!list.getClientRects().length) return;
+      // Include panel padding and the page's bottom gutter in the available space.
+      const top = list.getBoundingClientRect().top + window.scrollY;
+      list.style.setProperty("--show-list-height", `${Math.max(72, window.innerHeight - top - 48)}px`);
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(document.body);
+    observer.observe(list.parentElement!);
+    window.addEventListener("resize", fit);
+    fit();
+    return () => { observer.disconnect(); window.removeEventListener("resize", fit); };
+  }, []);
   const matches = anime.filter((entry) => entry.title.toLowerCase().includes(query.toLowerCase()));
   return <aside className="admin-panel min-w-0 self-start p-3!">
     <div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm!">Your shows <span className="ml-1 font-normal text-zinc-500">{anime.length}</span></h2>{onNew && <button type="button" className="editor-text-button" onClick={onNew}>+ Add anime</button>}</div>
     <label className="sr-only" htmlFor={id}>Filter your shows</label><input id={id} className="admin-input mb-3 text-sm" type="search" value={query} placeholder="Filter your shows…" onChange={(event) => setQuery(event.target.value)} />
-    <div className="flex gap-2 overflow-x-auto pb-2 lg:grid lg:max-h-[calc(100dvh-19rem)] lg:overflow-y-auto lg:pr-1">
+    <div ref={scroller} aria-label="Your shows list" className="flex gap-2 overflow-x-auto pb-2 lg:grid lg:max-h-[var(--show-list-height,40vh)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
       {matches.map((entry, index) => <button type="button" key={`${entry.id}:${index}`} aria-pressed={selectedId === entry.id} onClick={() => onSelect(entry)} className={`flex w-56 shrink-0 items-center gap-3 rounded-xl p-2 text-left transition lg:w-auto ${selectedId === entry.id ? "bg-cyan-300/10 ring-1 ring-inset ring-cyan-300/40" : "hover:bg-white/5"}`}>
         <Cover src={entry.cardImageUrl} title="" className="h-14 w-10 shrink-0 rounded-md" /><span className="min-w-0"><span className="line-clamp-2 text-sm font-semibold">{entry.title}</span><span className="mt-1 block text-[11px] capitalize text-zinc-500">{entry.collectionSlug} · {entry.isPublished ? "Published" : "Draft"}</span></span>
       </button>)}

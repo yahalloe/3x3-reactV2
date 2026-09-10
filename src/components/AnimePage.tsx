@@ -7,6 +7,8 @@ import { NotFound } from "../pages/NotFound";
 import { useContent } from "../content/ContentProvider";
 import { useJikanAnime } from "../lib/useJikanAnime";
 import { AnimeArtwork } from "./AnimeArtwork";
+import { Synopsis } from "./Synopsis";
+import { OpinionText } from "./OpinionText";
 
 export function AnimePage() {
   const { id } = useParams();
@@ -26,10 +28,10 @@ export function AnimePage() {
             <p className="section-label mb-5">Archive entry</p>
             <div className="border-l-2 border-cyan-400 pl-5">
               <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">Synopsis</p>
-              <p className="mt-3 whitespace-pre-line text-lg leading-8 text-zinc-200 sm:text-xl">{jikan?.synopsis ?? anime.synopsis}</p>
+              <Synopsis key={anime.id} text={jikan?.synopsis ?? anime.synopsis} />
               {jikan?.synopsis && <a className="mt-3 inline-block text-xs text-cyan-300 hover:underline" href={`https://myanimelist.net/anime/${jikan.malId}`} target="_blank" rel="noreferrer">Synopsis from MyAnimeList via Jikan ↗</a>}
             </div>
-            {anime.editorNote && <p className="mt-9 whitespace-pre-wrap break-words text-base leading-8 text-zinc-300">{anime.editorNote}</p>}
+            {anime.editorNote && <div className="mt-9 text-base leading-8 text-zinc-300">{typeof anime.editorNote === "string" ? <OpinionText text={anime.editorNote} /> : anime.editorNote}</div>}
             <section className="mt-9 border-t border-white/10 pt-7">
               <p className="font-mono text-xs uppercase tracking-[0.16em] text-cyan-300">Watch now</p>
               {anime.streamingProviders.length ? (

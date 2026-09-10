@@ -3,6 +3,11 @@ export interface PositionedItem {
   sortOrder: number;
 }
 
+// Stored collection order reserves zero for the homepage; shelf boards start at zero.
+export function collectionPositions<T extends PositionedItem & { slug: string }>(items: T[]): T[] {
+  return items.filter((item) => item.slug !== "favorites").map((item) => ({ ...item, sortOrder: item.sortOrder - 1 }));
+}
+
 export function boardPositions<T extends PositionedItem>(items: T[]) {
   const slots = Array.from({ length: 9 }, (_, index) => items.find((item) => item.sortOrder === index));
   // Keep legacy duplicate/out-of-range positions visible until an editor moves them.

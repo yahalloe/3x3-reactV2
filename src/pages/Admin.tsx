@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { type Anime, type Collection, useContent } from "../content/ContentProvider";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { animeImportFields } from "../lib/jikan";
-import { firstFreePosition, positionIsAvailable } from "../lib/adminModel";
+import { collectionPositions, firstFreePosition, positionIsAvailable } from "../lib/adminModel";
 import { JikanAnimePicker } from "../components/JikanAnimePicker";
 import { AnimeLibrary, Cover, Field, PositionPicker, SaveToast, SectionTitle, TextArea, type SaveNotice } from "../components/admin/EditorControls";
 import { EditorialComments } from "../components/admin/EditorialComments";
+import { SignOutDialog } from "../components/admin/SignOutDialog";
 import { PasswordSettings } from "../components/admin/PasswordSettings";
 
 type AnimeForm = Omit<Anime, "editorNote" | "collectionSlug">;
@@ -73,7 +74,7 @@ export function Admin() {
 
 function AdminWorkspace({ email }: { email: string }) {
   const { anime, collections, settings, refresh, error: contentError } = useContent();
-  const editableCollections = collections.filter((collection) => collection.slug !== "favorites");
+  const editableCollections = collectionPositions(collections);
   const [tab, setTab] = useState<Tab>("anime");
   const [step, setStep] = useState<"details" | "placement">("details");
   const [form, setForm] = useState<AnimeForm>(() => blankAnime(collections[0]?.id, firstFreePosition(anime.filter((item) => item.collectionId === collections[0]?.id))));
@@ -83,6 +84,7 @@ function AdminWorkspace({ email }: { email: string }) {
   const [settingsForm, setSettingsForm] = useState(settings);
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
   const working = useRef(false);
   const [notice, setNotice] = useState<SaveNotice | null>(null);
   const dismissNotice = useCallback(() => setNotice(null), []);
@@ -100,7 +102,7 @@ function AdminWorkspace({ email }: { email: string }) {
     }
   }, [anime, collections, dirty, form]);
   useEffect(() => {
-    const shelves = collections.filter((collection) => collection.slug !== "favorites");
+    const shelves = collectionPositions(collections);
     const isMainPage = collectionForm?.id === collections.find((collection) => collection.slug === "favorites")?.id;
     if (isMainPage || (shelves[0] && (!collectionForm || (!/^[0-9a-f]{8}-/i.test(collectionForm.id) && !shelves.some((entry) => entry.id === collectionForm.id))))) { setCollectionForm(shelves[0] ?? null); setCollectionBaseline(shelves[0] ?? null); }
   }, [collections, collectionForm]);
@@ -157,7 +159,7 @@ function AdminWorkspace({ email }: { email: string }) {
       if (!supabase) throw new Error("The content service is not configured.");
       if (collectionForm.slug === "favorites") throw new Error("The favorites slug is reserved for the main page.");
       if (!positionIsAvailable(editableCollections, collectionForm.sortOrder, collectionForm.id)) throw new Error("Choose an available collection position.");
-      const result = await supabase.from("collections").upsert({ id: collectionForm.id, slug: collectionForm.slug, title: collectionForm.title, eyebrow: collectionForm.eyebrow, description: collectionForm.description, cover_image_url: collectionForm.coverImageUrl, sort_order: collectionForm.sortOrder, is_published: collectionForm.isPublished }).select("id").single();
+      const result = await supabase.from("collections").upsert({ id: collectionForm.id, slug: collectionForm.slug, title: collectionForm.title, eyebrow: collectionForm.eyebrow, description: collectionForm.description, cover_image_url: collectionForm.coverImageUrl, sort_order: collectionForm.sortOrder + 1, is_published: collectionForm.isPublished }).select("id").single();
       if (result.error) throw result.error;
       setCollectionBaseline(collectionForm); await refresh();
     });
@@ -173,7 +175,7 @@ function AdminWorkspace({ email }: { email: string }) {
   };
 
   return <AdminShell>
-    <header className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><Link to="/" className="editor-text-button">← Back to site</Link><h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Your archive, your way.</h1><p className="mt-1 text-sm text-zinc-500">Choose a section. Make it yours.</p></div><button type="button" className="editor-secondary-button" disabled={busy} onClick={() => { if (!window.confirm("Sign out of the editor? Any unsaved changes will be lost.")) return; void runAction("Signing out…", "Signed out.", async () => { const result = await supabase?.auth.signOut(); if (result?.error) throw result.error; }); }}>Sign out</button></header>
+    <header className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><Link to="/" className="editor-text-button">← Back to site</Link><h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Your archive, your way.</h1><p className="mt-1 text-sm text-zinc-500">Choose a section. Make it yours.</p></div><button type="button" className="editor-secondary-button" disabled={busy} onClick={() => setSignOutOpen(true)}>Sign out</button></header>
     <nav aria-label="Editor sections" className="sticky top-0 z-20 mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-zinc-950/95 p-2 backdrop-blur-xl">
       {tabs.map((item) => <button key={item.id} type="button" aria-current={tab === item.id ? "page" : undefined} aria-controls={`editor-${item.id}`} disabled={busy} onClick={() => setTab(item.id)} className={`flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${tab === item.id ? "bg-cyan-300 text-zinc-950" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
     </nav>
@@ -213,7 +215,7 @@ function AdminWorkspace({ email }: { email: string }) {
         <TextArea label="About body" value={settingsForm.aboutBody} onChange={(aboutBody) => { setSettingsDirty(true); setSettingsForm({ ...settingsForm, aboutBody }); }} /><button disabled={busy} className="admin-button">Save site copy</button>
       </form></section></div>
       <div id="editor-account" hidden={tab !== "account"}><PasswordSettings email={email} busy={busy} runAction={runAction} /></div>
-    </fieldset><SaveToast notice={notice} onDismiss={dismissNotice} />
+    </fieldset>{signOutOpen && <SignOutDialog onCancel={() => setSignOutOpen(false)} onConfirm={() => { setSignOutOpen(false); void runAction("Signing out…", "Signed out.", async () => { const result = await supabase?.auth.signOut(); if (result?.error) throw result.error; }); }} />}<SaveToast notice={notice} onDismiss={dismissNotice} />
   </AdminShell>;
 }
 
