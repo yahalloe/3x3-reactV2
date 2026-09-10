@@ -9,9 +9,18 @@ export function collectionPositions<T extends PositionedItem & { slug: string }>
 }
 
 export function boardPositions<T extends PositionedItem>(items: T[]) {
-  const slots = Array.from({ length: 9 }, (_, index) => items.find((item) => item.sortOrder === index));
-  // Keep legacy duplicate/out-of-range positions visible until an editor moves them.
-  const overflow = items.filter((item) => !slots.includes(item));
+  // Resolve legacy collisions consistently, independent of database response order.
+  const ordered = [...items].sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id));
+  const slots = Array.from({ length: 9 }, (_, index) => ordered.find((item) => item.sortOrder === index));
+  const displaced = ordered.filter((item) => !slots.includes(item));
+  const overflow: T[] = [];
+  // Reserve all valid positions first, then fit displaced titles into empty cells.
+  // Real gaps remain empty; only a genuinely full board needs an overflow row.
+  for (const item of displaced) {
+    const empty = slots.findIndex((slot) => slot === undefined);
+    if (empty === -1) overflow.push(item);
+    else slots[empty] = item;
+  }
   return { slots, overflow };
 }
 
