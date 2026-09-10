@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { Anime } from "../content/ContentProvider";
 import { useJikanAnime } from "../lib/useJikanAnime";
 import { boardPositions } from "../lib/adminModel";
+import { useArtworkSource } from "../lib/useArtworkSource";
 
 interface MainContainerProps {
   list: Anime[];
@@ -47,11 +48,13 @@ export function MainContainer({ list }: MainContainerProps) {
 
 function AnimeCard({ anime, index, condensed }: { anime: Anime; index: number; condensed: boolean }) {
   const jikan = useJikanAnime(anime.slug, anime.title);
+  const artwork = useArtworkSource([anime.cardImageUrl, jikan?.imageUrl]);
   return (
           <Link to={`/anime/${anime.slug}`} className="group relative block overflow-hidden rounded-2xl bg-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-4 focus-visible:ring-offset-zinc-900">
             <img
               title={anime.title}
-              src={jikan?.imageUrl ?? anime.cardImageUrl}
+              src={artwork ?? "/anime/question.webp"}
+              decoding="async"
               onError={(event) => {
                 if (event.currentTarget.getAttribute("src") !== anime.cardImageUrl) event.currentTarget.src = anime.cardImageUrl;
               }}

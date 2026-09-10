@@ -23,7 +23,7 @@ export function AnimePage() {
       <Header title={anime.title} />
       <main className="page-surface min-h-[60vh]">
         <article className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] lg:gap-14">
-          <AnimeArtwork key={anime.id} title={anime.title} sources={[jikan?.imageUrl, anime.detailImageUrl, anime.cardImageUrl]} />
+          <AnimeArtwork key={anime.id} title={anime.title} sources={[anime.detailImageUrl, anime.cardImageUrl, jikan?.imageUrl]} />
           <div className="flex flex-col justify-center">
             <p className="section-label mb-5">Archive entry</p>
             <div className="border-l-2 border-cyan-400 pl-5">
