@@ -17,8 +17,8 @@ export function FormattingToolbar({ onFormat }: { onFormat: (marker: string, blo
         className="grid h-10 w-10 place-items-center rounded-full text-zinc-300 transition hover:bg-white/10 hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-cyan-300">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">{icon}</svg>
       </button>
-      <span id={`${id}-${index}`} role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-white/15 bg-zinc-950 px-2.5 py-1.5 text-xs text-white shadow-lg group-hover:block group-focus-within:block">
-        <span aria-hidden="true" className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-l border-t border-white/15 bg-zinc-950" />
+      <span id={`${id}-${index}`} role="tooltip" className="pointer-events-none absolute left-1/2 bottom-full z-30 mb-2 invisible opacity-0 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/15 bg-zinc-950 px-2.5 py-1.5 text-xs text-white shadow-lg translate-y-1 transition-[opacity,translate,visibility] duration-150 ease-out delay-0 motion-reduce:transition-none motion-reduce:translate-y-0 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:delay-[400ms] group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:delay-[400ms]">
+        <span aria-hidden="true" className="absolute left-1/2 bottom-0 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 border-r border-b border-white/15 bg-zinc-950" />
         <span className="relative">{label}</span>
       </span>
     </div>)}
