@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { sharpestArtwork, type ArtworkSize } from "./artworkQuality";
+import { preferredArtwork, type ArtworkSize } from "./artworkQuality";
 
 // Share measurements across cards/detail pages; use the browser's image cache.
 const measurements = new Map<string, Promise<ArtworkSize | null>>();
@@ -15,7 +15,12 @@ function measure(url: string) {
       resolve(result);
     };
     const timeout = setTimeout(() => finish(null), 15000);
-    image.onload = () => finish({ url, width: image.naturalWidth, height: image.naturalHeight });
+    image.onload = () => {
+      void image.decode().then(
+        () => finish({ url, width: image.naturalWidth, height: image.naturalHeight }),
+        () => finish(null),
+      );
+    };
     image.onerror = () => finish(null);
     image.src = url;
   });
@@ -23,25 +28,21 @@ function measure(url: string) {
   return pending;
 }
 
-export function useArtworkSource(sources: (string | null | undefined)[], fit: "cover" | "contain" = "cover") {
+export function useArtworkSource(sources: (string | null | undefined)[], fit: "cover" | "contain" = "cover", ready = true, apiUrl?: string | null) {
   const key = JSON.stringify([...new Set(sources.filter((url): url is string => Boolean(url)))]);
-  const [result, setResult] = useState<{ key: string; fit: string; url?: string }>();
+  const selectionKey = JSON.stringify([key, fit, apiUrl]);
+  const [result, setResult] = useState<{ key: string; url?: string }>();
   useEffect(() => {
+    if (!ready) return;
     let active = true;
     const urls: string[] = JSON.parse(key);
-    const loaded = new Map<string, ArtworkSize>();
-    let remaining = urls.length;
-    for (const url of urls) {
-      void measure(url).then((size) => {
-        if (!active) return;
-        remaining--;
-        if (size) loaded.set(url, size);
-        // Original ordering wins equal-resolution ties, preserving editorial choices.
-        const images = urls.flatMap((candidate) => loaded.has(candidate) ? [loaded.get(candidate)!] : []);
-        if (images.length || !remaining) setResult({ key, fit, url: sharpestArtwork(images, fit) });
-      });
-    }
+    // Commit once, only after every candidate is loaded/decoded or has failed.
+    // A placeholder remains visible throughout API lookup and selection.
+    void Promise.all(urls.map(measure)).then((sizes) => {
+      if (active) setResult({ key: selectionKey, url: preferredArtwork(sizes.filter((size): size is ArtworkSize => size !== null), apiUrl, fit) });
+    });
     return () => { active = false; };
-  }, [key, fit]);
-  return result?.key === key && result.fit === fit ? result.url : (JSON.parse(key) as string[])[0];
+  }, [key, fit, ready, apiUrl, selectionKey]);
+  const loading = !ready || result?.key !== selectionKey;
+  return { source: loading ? undefined : result?.url, loading };
 }

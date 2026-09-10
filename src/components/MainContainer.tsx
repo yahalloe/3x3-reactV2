@@ -4,6 +4,7 @@ import type { Anime } from "../content/ContentProvider";
 import { useJikanAnime } from "../lib/useJikanAnime";
 import { boardPositions } from "../lib/adminModel";
 import { useArtworkSource } from "../lib/useArtworkSource";
+import { ArtworkPlaceholder } from "./ArtworkPlaceholder";
 
 interface MainContainerProps {
   list: Anime[];
@@ -48,12 +49,12 @@ export function MainContainer({ list }: MainContainerProps) {
 
 function AnimeCard({ anime, index, condensed }: { anime: Anime; index: number; condensed: boolean }) {
   const jikan = useJikanAnime(anime.slug, anime.title);
-  const artwork = useArtworkSource([anime.cardImageUrl, jikan?.imageUrl]);
+  const { source: artwork, loading } = useArtworkSource([jikan?.imageUrl, anime.cardImageUrl], "cover", jikan !== undefined, jikan?.imageUrl);
   return (
           <Link to={`/anime/${anime.slug}`} className="group relative block overflow-hidden rounded-2xl bg-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-4 focus-visible:ring-offset-zinc-900">
-            <img
+            {artwork ? <img
               title={anime.title}
-              src={artwork ?? "/anime/question.webp"}
+              src={artwork}
               decoding="async"
               onError={(event) => {
                 if (event.currentTarget.getAttribute("src") !== anime.cardImageUrl) event.currentTarget.src = anime.cardImageUrl;
@@ -61,7 +62,7 @@ function AnimeCard({ anime, index, condensed }: { anime: Anime; index: number; c
               alt={anime.title}
               loading={index > 2 ? "lazy" : "eager"}
               className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-            />
+            /> : <ArtworkPlaceholder loading={loading} />}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/10 to-transparent opacity-80 transition group-hover:opacity-100" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 p-2 sm:gap-3 sm:p-4">
               <h2 className={`line-clamp-2 min-w-0 leading-tight font-bold sm:max-w-[80%] tracking-tight text-white sm:text-lg ${condensed ? "text-[10px]" : "p-2 text-lg"}`}>{anime.title}</h2>

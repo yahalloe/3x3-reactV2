@@ -1,6 +1,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sharpestArtwork } from '../src/lib/artworkQuality.ts';
+import { sharpestArtwork, preferredArtwork } from '../src/lib/artworkQuality.ts';
+
+test('API artwork wins over local images, with the largest API candidate selected', () => {
+  const images = [
+    { url: '/local.jpg', width: 3000, height: 3000 },
+    { url: 'https://cdn.myanimelist.net/poster.jpg', width: 450, height: 640 },
+    { url: 'https://media.kitsu.app/original.jpg', width: 1200, height: 1800 },
+  ];
+  assert.equal(preferredArtwork(images), images[2].url);
+  assert.equal(preferredArtwork(images.slice(0, 2)), images[1].url);
+});
+test('local artwork is only a fallback when API candidates fail', () => {
+  assert.equal(preferredArtwork([{ url: '/local.jpg', width: 800, height: 600 }, { url: 'https://cdn.myanimelist.net/broken.jpg', width: 0, height: 0 }]), '/local.jpg');
+  assert.equal(preferredArtwork([]), undefined);
+});
 
 test('a small API poster cannot replace high-resolution saved artwork', () => {
   assert.equal(sharpestArtwork([

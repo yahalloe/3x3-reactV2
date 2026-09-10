@@ -13,5 +13,6 @@ export function useJikanAnime(slug: string, title: string) {
     return () => { active = false; };
   }, [slug, title, key]);
 
-  return result?.key === key ? result.data : null;
+  // undefined means still resolving; null means the API finished without a match.
+  return result?.key === key ? result.data : undefined;
 }
