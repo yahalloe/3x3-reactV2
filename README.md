@@ -12,7 +12,19 @@ Account lets the signed-in editor change their own password by verifying the cur
 
 ## Jikan anime data
 
-Public anime cards and detail pages load cover images and full synopses from [Jikan v4](https://docs.api.jikan.moe/), with no API key required. Existing local or Supabase content is shown while loading and remains the fallback if Jikan is unavailable or an image fails to load. Editor notes and CMS content are preserved.
+Public cards load the saved API image URL directly from Supabase. They do not call Jikan or Kitsu, compare image dimensions, or preload competing candidates. The browser loads one cover at a time, prioritizes the first card, and lazy-loads lower rows. A fixed-size placeholder lasts only until that image loads, with sequential fallback on image errors. Detail artwork also loads directly; its optional Jikan synopsis lookup never blocks the image.
+
+### Artwork selection and framing
+
+Apply `supabase/migrations/202609100002_artwork_selection.sql` before deploying this editor version. It adds `artwork_locked`, `focal_x`, and `focal_y` without replacing existing content or changing RLS.
+
+In `/admin`, select an anime, then **Browse API artwork** under **Artwork & framing**. The picker combines Jikan's `/anime/{id}/pictures` gallery with Kitsu's original posters and banners. Kitsu results must match the anime's MAL ID or explicit Kitsu ID; title similarity alone is not enough. A failed provider does not discard successful results from the other provider.
+
+Choose an image, inspect the square card and full detail previews, and use the horizontal/vertical buttons or click the crop to change positioning. **Save anime** persists the image URLs, lock, and 0–100 crop positions in Supabase. Public pages always respect the saved selection; the lock also protects it from catalog artwork refresh scripts. Dimensions are informational, not an aesthetic quality rating.
+
+`scripts/prepare-api-artwork.mjs` is a read-only maintenance tool that matches existing local artwork by MAL ID to Kitsu originals and prints conditional SQL for review. It never writes to Supabase. The reviewed `202609110001_api_posters.sql` migration upgrades the initial uncurated catalog. AniList's live API reported temporary suspension during verification on September 11, 2026, so it is not a runtime dependency.
+
+The picker uses keyless APIs. [Fanart.tv](https://fanart.tv/api-docs/api-v3/) offers dedicated artwork and textless variants, but requires API credentials and external title IDs; it is not enabled. Do not put secret provider credentials in `VITE_*` environment variables. An eventual integration should keep those credentials in a server-side proxy.
 
 Requests are shared between cards and detail pages, paced at one every 1.1 seconds, and successful responses are cached in the browser for 24 hours. Rate limits and server errors receive bounded retries. Only rendered entries request data; placeholders are skipped. Existing archive slugs map to MyAnimeList IDs in `src/lib/jikan.ts`; new CMS titles use exact title/alias matches. Add a slug-to-ID mapping there for ambiguous titles or specific seasons.
 

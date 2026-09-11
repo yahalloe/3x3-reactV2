@@ -9,6 +9,7 @@ interface KitsuEntry {
     subtype?: string;
     startDate?: string | null;
     posterImage?: { original?: string; large?: string; medium?: string } | null;
+    coverImage?: { original?: string; large?: string } | null;
   };
   relationships?: { mappings?: { data?: { type: string; id: string }[] } };
 }
@@ -28,7 +29,7 @@ export async function searchKitsuAnime(
       "page[limit]": "10",
       include: "mappings",
       "fields[anime]":
-        "titles,canonicalTitle,synopsis,posterImage,subtype,startDate,mappings",
+        "titles,canonicalTitle,synopsis,posterImage,coverImage,subtype,startDate,mappings",
       "fields[mappings]": "externalSite,externalId",
     });
     const response = await fetch(`https://kitsu.app/api/edge/anime?${params}`, {
@@ -73,6 +74,7 @@ export async function searchKitsuAnime(
           malId: mappedId ?? null,
           source: "kitsu",
           kitsuId: entry.id,
+          coverImageUrl: attributes.coverImage?.original || attributes.coverImage?.large || null,
           title: attributes.titles?.en || attributes.canonicalTitle!,
           type: attributes.subtype ?? null,
           year: Number.isInteger(year) && year > 0 ? year : null,

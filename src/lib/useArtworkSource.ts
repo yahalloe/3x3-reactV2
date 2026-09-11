@@ -28,9 +28,9 @@ function measure(url: string) {
   return pending;
 }
 
-export function useArtworkSource(sources: (string | null | undefined)[], fit: "cover" | "contain" = "cover", ready = true, apiUrl?: string | null) {
+export function useArtworkSource(sources: (string | null | undefined)[], fit: "cover" | "contain" = "cover", ready = true, apiUrl?: string | null, locked = false) {
   const key = JSON.stringify([...new Set(sources.filter((url): url is string => Boolean(url)))]);
-  const selectionKey = JSON.stringify([key, fit, apiUrl]);
+  const selectionKey = JSON.stringify([key, fit, apiUrl, locked]);
   const [result, setResult] = useState<{ key: string; url?: string }>();
   useEffect(() => {
     if (!ready) return;
@@ -39,10 +39,10 @@ export function useArtworkSource(sources: (string | null | undefined)[], fit: "c
     // Commit once, only after every candidate is loaded/decoded or has failed.
     // A placeholder remains visible throughout API lookup and selection.
     void Promise.all(urls.map(measure)).then((sizes) => {
-      if (active) setResult({ key: selectionKey, url: preferredArtwork(sizes.filter((size): size is ArtworkSize => size !== null), apiUrl, fit) });
+      if (active) setResult({ key: selectionKey, url: locked ? sizes.find((size) => size !== null)?.url : preferredArtwork(sizes.filter((size): size is ArtworkSize => size !== null), apiUrl, fit) });
     });
     return () => { active = false; };
-  }, [key, fit, ready, apiUrl, selectionKey]);
+  }, [key, fit, ready, apiUrl, selectionKey, locked]);
   const loading = !ready || result?.key !== selectionKey;
   return { source: loading ? undefined : result?.url, loading };
 }

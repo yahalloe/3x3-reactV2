@@ -24,6 +24,11 @@ export interface JikanAnime {
   synopsis: string | null;
 }
 
+export function knownMalId(slug: string): number | undefined {
+  const match = /^mal-([1-9]\d*)$/.exec(slug);
+  return match ? Number(match[1]) : catalogIds[slug];
+}
+
 interface ApiAnime {
   mal_id: number;
   title?: string;
@@ -100,12 +105,24 @@ async function request(path: string, signal?: AbortSignal, attempts = 3): Promis
 const normalizeTitle = (title: string) => title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
 
 export interface JikanSearchResult extends Omit<JikanAnime, "malId"> {
+  coverImageUrl?: string | null;
   malId: number | null;
   source?: "kitsu";
   kitsuId?: string;
   title: string;
   type: string | null;
   year: number | null;
+}
+
+export async function getJikanPictures(slug: string, title: string, signal?: AbortSignal): Promise<string[]> {
+  const id = knownMalId(slug);
+  const anime = id ? { malId: id, imageUrl: null } : await getJikanAnime(slug, title);
+  signal?.throwIfAborted();
+  if (!anime) return [];
+  const result = await request(`/anime/${anime.malId}/pictures`, signal, 1) as { data?: ApiAnime["images"][] };
+  return [...new Set([anime.imageUrl, ...(result.data ?? []).map((picture) =>
+    picture?.jpg?.large_image_url || picture?.webp?.large_image_url || picture?.jpg?.image_url || picture?.webp?.image_url
+  )].filter((url): url is string => Boolean(url)))];
 }
 
 export function animeImportFields(entry: JikanSearchResult) {

@@ -9,6 +9,7 @@ import { AnimeLibrary, Cover, Field, PositionPicker, SaveToast, SectionTitle, Te
 import { EditorialComments } from "../components/admin/EditorialComments";
 import { SignOutDialog } from "../components/admin/SignOutDialog";
 import { PasswordSettings } from "../components/admin/PasswordSettings";
+import { ArtworkPicker } from "../components/admin/ArtworkPicker";
 
 type AnimeForm = Omit<Anime, "editorNote" | "collectionSlug">;
 type Tab = "anime" | "collections" | "comments" | "site" | "account";
@@ -17,7 +18,7 @@ const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: "comments", label: "Comments", icon: "☷" }, { id: "site", label: "Site copy", icon: "Aa" }, { id: "account", label: "Account", icon: "⚙" },
 ];
 const blankAnime = (collectionId = "", sortOrder = -1): AnimeForm => ({ id: crypto.randomUUID(), collectionId, slug: "", title: "", cardImageUrl: "", detailImageUrl: "", synopsis: "", streamingProviders: [], sortOrder, isPublished: true });
-const formFromAnime = (entry: Anime): AnimeForm => ({ id: entry.id, collectionId: entry.collectionId, slug: entry.slug, title: entry.title, cardImageUrl: entry.cardImageUrl, detailImageUrl: entry.detailImageUrl, synopsis: entry.synopsis, streamingProviders: entry.streamingProviders, sortOrder: entry.sortOrder, isPublished: entry.isPublished });
+const formFromAnime = (entry: Anime): AnimeForm => ({ id: entry.id, collectionId: entry.collectionId, slug: entry.slug, title: entry.title, cardImageUrl: entry.cardImageUrl, detailImageUrl: entry.detailImageUrl, synopsis: entry.synopsis, streamingProviders: entry.streamingProviders, sortOrder: entry.sortOrder, isPublished: entry.isPublished, artworkLocked: entry.artworkLocked ?? false, focalX: entry.focalX ?? 50, focalY: entry.focalY ?? 50 });
 
 export function Admin() {
   const [email, setEmail] = useState("");
@@ -133,7 +134,7 @@ function AdminWorkspace({ email }: { email: string }) {
       const occupied = await supabase.from("anime").select("id,title").eq("collection_id", form.collectionId).eq("sort_order", form.sortOrder).neq("id", form.id);
       if (occupied.error) throw occupied.error;
       if (occupied.data?.length) { await refresh(); throw new Error("That place has just been occupied. Please select another one."); }
-      const payload = { id: form.id, collection_id: form.collectionId, slug: form.slug, title: form.title.trim(), card_image_url: form.cardImageUrl, detail_image_url: form.detailImageUrl || form.cardImageUrl, synopsis: form.synopsis, streaming_providers: form.streamingProviders, sort_order: form.sortOrder, is_published: form.isPublished };
+      const payload = { id: form.id, collection_id: form.collectionId, slug: form.slug, title: form.title.trim(), card_image_url: form.cardImageUrl, detail_image_url: form.detailImageUrl || form.cardImageUrl, synopsis: form.synopsis, streaming_providers: form.streamingProviders, sort_order: form.sortOrder, is_published: form.isPublished, artwork_locked: form.artworkLocked ?? false, focal_x: form.focalX ?? 50, focal_y: form.focalY ?? 50 };
       const write = existing ? supabase.from("anime").update(payload).eq("id", form.id) : supabase.from("anime").insert(payload);
       const result = await write.select("id").single();
       if (result.error) throw result.error;
@@ -188,7 +189,8 @@ function AdminWorkspace({ email }: { email: string }) {
             <div className="flex gap-2 px-5 pt-4">{(["details", "placement"] as const).map((item, index) => <button type="button" key={item} aria-pressed={step === item} onClick={() => setStep(item)} className={`rounded-full px-4 py-2 text-xs font-semibold ${step === item ? "bg-white/10 text-cyan-200" : "text-zinc-500 hover:text-white"}`}>{index + 1}. {item === "details" ? "Find & edit" : "Position & publish"}</button>)}</div>
             <div className="grid gap-5 p-5">
               {step === "details" ? <>
-                <JikanAnimePicker key={form.id} onSelect={(entry) => setForm((current) => ({ ...current, ...animeImportFields(entry) }))} />
+                <JikanAnimePicker key={form.id} onSelect={(entry) => setForm((current) => ({ ...current, ...animeImportFields(entry), artworkLocked: false, focalX: 50, focalY: 50 }))} />
+                <ArtworkPicker key={`${form.id}:${form.slug}`} slug={form.slug} title={form.title} value={form} onChange={(patch) => setForm((current) => ({ ...current, ...patch }))} />
                 <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} required={false} />
                 <details className="rounded-xl border border-white/10 p-4"><summary className="text-sm font-semibold">Synopsis & image details</summary><div className="mt-4 grid gap-4"><TextArea label="Synopsis" rows={5} value={form.synopsis} onChange={(synopsis) => setForm({ ...form, synopsis })} /><Field label="Card image URL" value={form.cardImageUrl} onChange={(cardImageUrl) => setForm({ ...form, cardImageUrl })} required={false} /><Field label="Detail image URL" value={form.detailImageUrl} onChange={(detailImageUrl) => setForm({ ...form, detailImageUrl })} required={false} /><Field label="URL slug" value={form.slug} onChange={(slug) => setForm({ ...form, slug })} required={false} /></div></details>
                 <button type="button" className="editor-secondary-button justify-self-end" onClick={() => setStep("placement")}>Choose position →</button>

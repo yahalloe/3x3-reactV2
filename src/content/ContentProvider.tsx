@@ -16,6 +16,9 @@ export interface Collection {
 }
 
 export interface Anime {
+  artworkLocked?: boolean;
+  focalX?: number;
+  focalY?: number;
   id: string;
   collectionId: string;
   collectionSlug: string;
@@ -83,6 +86,7 @@ const mapCollection = (row: Record<string, unknown>): Collection => ({
 });
 
 const mapAnime = (row: Record<string, unknown>, collectionSlug: string): Anime => ({
+  artworkLocked: row.artwork_locked === true, focalX: Number(row.focal_x ?? 50), focalY: Number(row.focal_y ?? 50),
   id: String(row.id), collectionId: String(row.collection_id), collectionSlug, slug: String(row.slug), title: String(row.title),
   cardImageUrl: String(row.card_image_url), detailImageUrl: String(row.detail_image_url), synopsis: String(row.synopsis),
   editorNote: String(row.editor_note), streamingProviders: (row.streaming_providers as StreamingProvider[] | null) ?? [],
@@ -92,7 +96,8 @@ const mapAnime = (row: Record<string, unknown>, collectionSlug: string): Anime =
 export function ContentProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState(fallbackSettings);
   const [collections, setCollections] = useState(fallbackCollections);
-  const [anime, setAnime] = useState(fallbackAnime);
+  // Do not flash the old bundled artwork before the saved catalog arrives.
+  const [anime, setAnime] = useState<Anime[]>(isSupabaseConfigured ? [] : fallbackAnime);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
 
