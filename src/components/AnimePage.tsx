@@ -30,7 +30,7 @@ export function AnimePage() {
       <main className="page-surface min-h-[60vh]">
         <nav aria-label="Breadcrumb" className="page-shell breadcrumbs pt-6"><Link to="/">Archive</Link>{parent !== "/" && <><span aria-hidden="true">/</span><Link to={parent}>{collection?.title ?? "Collection"}</Link></>}<span aria-hidden="true">/</span><span aria-current="page">{anime.title}</span></nav>
         <article className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] lg:gap-14">
-          <AnimeArtwork key={anime.id} title={anime.title} sources={[anime.detailImageUrl, anime.cardImageUrl, getLocalArtwork(anime.slug)]} />
+          <AnimeArtwork key={anime.id} title={anime.title} sources={[anime.detailImageUrl, anime.cardImageUrl, getLocalArtwork(anime.slug)]} focalX={anime.focalX} focalY={anime.focalY} />
           <div className="flex flex-col justify-center">
             <p className="section-label mb-5">Archive entry</p>
             <div className="border-l-2 border-cyan-400 pl-5">
