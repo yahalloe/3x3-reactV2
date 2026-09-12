@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArtworkPlaceholder } from "./ArtworkPlaceholder";
 
 type Props = { sources: (string | null | undefined)[]; title: string; fit?: "cover" | "contain"; focalX?: number; focalY?: number; priority?: boolean; lazy?: boolean; className?: string };
@@ -11,6 +11,11 @@ function ArtworkImage({ sources, title, fit = "cover", focalX = 50, focalY = 50,
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState<string>();
   const source = sources[index] || undefined;
+  useEffect(() => {
+    if (!source || loaded === source || lazy) return;
+    const timeout = setTimeout(() => setIndex((current) => current + 1), 12000);
+    return () => clearTimeout(timeout);
+  }, [source, loaded, lazy]);
   return <div className={`relative overflow-hidden bg-zinc-900 ${className}`}>
     {loaded !== source || !source ? <div className="absolute inset-0"><ArtworkPlaceholder loading={Boolean(source)} className="h-full w-full" /></div> : null}
     {source && <img src={source} alt={title} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"}

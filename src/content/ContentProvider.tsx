@@ -1,6 +1,8 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { animeList, dramaList, musicList, romcomList } from "../components/animeData";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { readSnapshot, saveSnapshot } from "../lib/contentCache";
+import { canonicalSlug } from "../lib/publicNavigation";
 
 export type StreamingProvider = "netflix" | "crunchyroll";
 
@@ -60,11 +62,13 @@ const sourceLists = [["favorites", animeList], ["romcom", romcomList], ["drama",
 
 const fallbackAnime: Anime[] = sourceLists.flatMap(([collectionSlug, list]) =>
   list.map((item, sortOrder) => ({
-    id: item.id, collectionId: collectionSlug, collectionSlug, slug: item.id, title: item.title,
+    id: item.id, collectionId: collectionSlug, collectionSlug, slug: canonicalSlug(item.id), title: item.title,
     cardImageUrl: item.image, detailImageUrl: item.image1, synopsis: item.description, editorNote: item.reason,
     streamingProviders: "streaming" in item ? item.streaming ?? [] : [], sortOrder, isPublished: true,
   })),
 );
+
+export const getLocalArtwork = (slug: string) => fallbackAnime.find((entry) => entry.slug === canonicalSlug(slug))?.cardImageUrl;
 
 type ContentContextValue = {
   settings: SiteSettings;
@@ -88,51 +92,70 @@ const mapCollection = (row: Record<string, unknown>): Collection => ({
 const mapAnime = (row: Record<string, unknown>, collectionSlug: string): Anime => ({
   artworkLocked: row.artwork_locked === true, focalX: Number(row.focal_x ?? 50), focalY: Number(row.focal_y ?? 50),
   id: String(row.id), collectionId: String(row.collection_id), collectionSlug, slug: String(row.slug), title: String(row.title),
-  cardImageUrl: String(row.card_image_url), detailImageUrl: String(row.detail_image_url), synopsis: String(row.synopsis),
+  cardImageUrl: String(row.card_image_url ?? ""), detailImageUrl: String(row.detail_image_url ?? ""), synopsis: String(row.synopsis ?? ""),
   editorNote: String(row.editor_note), streamingProviders: (row.streaming_providers as StreamingProvider[] | null) ?? [],
   sortOrder: Number(row.sort_order), isPublished: Boolean(row.is_published),
 });
 
 export function ContentProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState(fallbackSettings);
-  const [collections, setCollections] = useState(fallbackCollections);
+  const [snapshot] = useState(readSnapshot);
+  const requestId = useRef(0);
+  const hasRemote = useRef(false);
+  const [settings, setSettings] = useState(snapshot?.settings ?? fallbackSettings);
+  const [collections, setCollections] = useState(snapshot?.collections ?? fallbackCollections);
   // Do not flash the old bundled artwork before the saved catalog arrives.
-  const [anime, setAnime] = useState<Anime[]>(isSupabaseConfigured ? [] : fallbackAnime);
+  const [anime, setAnime] = useState<Anime[]>(isSupabaseConfigured ? snapshot?.anime ?? [] : fallbackAnime);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!supabase) { setLoading(false); return; }
     setLoading(true);
+    const current = ++requestId.current;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
     const [settingsResult, collectionsResult, animeResult] = await Promise.all([
-      supabase.from("site_settings").select("*").eq("id", true).maybeSingle(),
-      supabase.from("collections").select("*").order("sort_order"),
-      supabase.from("anime").select("*").order("sort_order"),
+      supabase.from("site_settings").select("*").eq("id", true).abortSignal(controller.signal).maybeSingle(),
+      supabase.from("collections").select("*").order("sort_order").abortSignal(controller.signal),
+      supabase.from("anime").select("*").order("sort_order").abortSignal(controller.signal),
     ]);
+    if (current !== requestId.current) return;
     const firstError = settingsResult.error ?? collectionsResult.error ?? animeResult.error;
-    if (firstError) { setError(firstError.message); setLoading(false); return; }
+    if (firstError) throw new Error(firstError.message);
 
     const nextCollections = (collectionsResult.data ?? []).map((row) => mapCollection(row));
-    if (nextCollections.length) setCollections(nextCollections);
+    setCollections(nextCollections);
+    let nextSettings = fallbackSettings;
     if (settingsResult.data) {
       const row = settingsResult.data;
-      setSettings({ homeTitle: row.home_title, archiveLabel: row.archive_label, aboutTitle: row.about_title, aboutBody: row.about_body, footerText: row.footer_text });
+      nextSettings = { homeTitle: row.home_title, archiveLabel: row.archive_label, aboutTitle: row.about_title, aboutBody: row.about_body, footerText: row.footer_text };
     }
-    if (animeResult.data?.length) {
+    setSettings(nextSettings);
       const slugsByCollectionId = new Map(nextCollections.map((collection) => [collection.id, collection.slug]));
-      setAnime(animeResult.data.map((row) => mapAnime(row, slugsByCollectionId.get(row.collection_id) ?? "favorites")));
-    }
+      const nextAnime = (animeResult.data ?? []).map((row) => mapAnime(row, slugsByCollectionId.get(row.collection_id) ?? ""));
+      setAnime(nextAnime);
+      saveSnapshot({ settings: nextSettings, anime: nextAnime, collections: nextCollections });
     setError(null);
-    setLoading(false);
-  }, []);
+    hasRemote.current = true;
+    } catch (cause) {
+      if (current !== requestId.current) return;
+      setError(cause instanceof Error ? cause.message : "Content service unavailable");
+      if (!hasRemote.current) {
+        setAnime(snapshot?.anime ?? fallbackAnime);
+        setCollections(snapshot?.collections ?? fallbackCollections);
+        if (snapshot) setSettings(snapshot.settings);
+      }
+    } finally { clearTimeout(timeout); if (current === requestId.current) setLoading(false); }
+  }, [snapshot]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
   const value = useMemo<ContentContextValue>(() => ({
     settings, collections, anime, loading, error, refresh,
-    getCollection: (slug) => collections.find((collection) => collection.slug === slug),
-    getAnime: (slug) => anime.find((entry) => entry.slug === slug),
-    getAnimeForCollection: (slug) => anime.filter((entry) => entry.collectionSlug === slug).sort((a, b) => a.sortOrder - b.sortOrder),
+    getCollection: (slug) => collections.find((collection) => collection.slug === slug && collection.isPublished),
+    getAnime: (slug) => anime.find((entry) => entry.slug === canonicalSlug(slug) && entry.isPublished && collections.some((collection) => collection.id === entry.collectionId && collection.isPublished)),
+    getAnimeForCollection: (slug) => anime.filter((entry) => entry.collectionSlug === slug && entry.isPublished).sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)),
   }), [settings, collections, anime, loading, error, refresh]);
 
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;

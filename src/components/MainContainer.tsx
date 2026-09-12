@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useContent, type Anime } from "../content/ContentProvider";
+import { getLocalArtwork, useContent, type Anime } from "../content/ContentProvider";
 import { boardPositions } from "../lib/adminModel";
 import { SavedArtwork } from "./SavedArtwork";
 import { ArtworkPlaceholder } from "./ArtworkPlaceholder";
@@ -39,7 +39,7 @@ export function MainContainer({ list }: MainContainerProps) {
       </div>
       <div className={`grid gap-2 sm:grid-cols-3 sm:gap-4 ${condensed ? "grid-cols-3" : "grid-cols-1"}`}>
         {slots.map((anime, index) => {
-          return anime ? <AnimeCard key={`${anime.id}:${index}`} anime={anime} condensed={condensed} index={index} /> : loading ? <ArtworkPlaceholder key={`loading-${index}`} loading className="aspect-square rounded-2xl" /> : <div key={`empty-${index}`} className={`${condensed ? "grid" : "hidden"} aspect-square place-items-center rounded-xl p-2 text-center sm:rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-xs text-zinc-600 sm:grid`} aria-label={`Empty position ${index + 1}`}>To be discovered</div>;
+          return anime ? <AnimeCard key={`${anime.id}:${index}`} anime={anime} condensed={condensed} index={index} /> : loading ? <ArtworkPlaceholder key={`loading-${index}`} loading className="aspect-square rounded-2xl" /> : <div key={`empty-${index}`} className={`${condensed ? "grid" : "hidden"} aspect-square place-items-center rounded-xl p-2 text-center sm:rounded-2xl border border-dashed border-white/10 bg-white/[0.02] text-xs text-zinc-400 sm:grid`} aria-label={`Empty position ${index + 1}`}>To be discovered</div>;
         })}
         {overflow.map((anime, index) => <AnimeCard key={`${anime.id}:overflow:${index}`} anime={anime} condensed={condensed} index={slots.length + index} />)}
       </div>
@@ -49,12 +49,12 @@ export function MainContainer({ list }: MainContainerProps) {
 
 function AnimeCard({ anime, index, condensed }: { anime: Anime; index: number; condensed: boolean }) {
   return (
-          <Link to={`/anime/${anime.slug}`} className="group relative block overflow-hidden rounded-2xl bg-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-4 focus-visible:ring-offset-zinc-900">
-            <SavedArtwork sources={[anime.cardImageUrl, anime.detailImageUrl]} title={anime.title} focalX={anime.focalX} focalY={anime.focalY} priority={index === 0} lazy={index > 2} />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/10 to-transparent opacity-80 transition group-hover:opacity-100" />
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 p-2 sm:gap-3 sm:p-4">
-              <h2 className={`line-clamp-2 min-w-0 leading-tight font-bold sm:max-w-[80%] tracking-tight text-white sm:text-lg ${condensed ? "text-[10px]" : "p-2 text-lg"}`}>{anime.title}</h2>
-              <span className="hidden font-mono text-xs text-cyan-300 sm:block">{String(index + 1).padStart(2, "0")}</span>
+          <Link to={`/anime/${anime.slug}`} className="anime-card group" aria-label={`Explore ${anime.title}`}>
+            <SavedArtwork sources={[anime.cardImageUrl, anime.detailImageUrl, getLocalArtwork(anime.slug)]} title={`Artwork for ${anime.title}`} focalX={anime.focalX} focalY={anime.focalY} priority={index === 0} lazy={index > 2} />
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+            <div className={`absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 sm:gap-3 sm:p-4 ${condensed ? "p-1.5" : "p-3"}`}>
+              <h2 className={`line-clamp-2 min-w-0 leading-tight font-bold sm:max-w-[80%] tracking-tight text-white sm:text-lg ${condensed ? "text-xs" : "text-lg"}`}>{anime.title}</h2>
+              <span aria-hidden="true" className="shrink-0 text-sm text-cyan-200">↗</span>
             </div>
           </Link>
   );

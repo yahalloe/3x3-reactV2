@@ -10,11 +10,11 @@ export function Home() {
   return (
     <div>
       <Header title={settings.homeTitle} />
-      <div className="black-333">
+      <main>
         <Body />
         <Others />
-        <Footer />
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

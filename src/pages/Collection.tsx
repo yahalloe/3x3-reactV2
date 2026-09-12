@@ -1,29 +1,23 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { MainContainer } from "../components/MainContainer";
 import { NotFound } from "./NotFound";
+import { PageSkeleton } from "../components/PageSkeleton";
+import { BackButton } from "../components/BackButton";
 import { useContent } from "../content/ContentProvider";
 
-export function CollectionPage() {
+export function CollectionPage({ collectionSlug }: { collectionSlug?: string }) {
   const { slug } = useParams();
-  const { getCollection, getAnimeForCollection } = useContent();
-  const collection = getCollection(slug ?? "");
+  const { getCollection, getAnimeForCollection, loading } = useContent();
+  const collection = getCollection(collectionSlug ?? slug ?? "");
+  if (!collection && loading) return <PageSkeleton />;
   if (!collection) return <NotFound />;
-
-  return (
-    <div>
-      <Header title={collection.title} />
-      <main className="page-surface">
-        <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-          <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div><p className="section-label mb-3">{collection.eyebrow}</p><h2 className="text-3xl font-bold tracking-[-0.05em] text-white sm:text-4xl">{collection.title}</h2></div>
-            <p className="max-w-sm text-sm leading-6 text-zinc-400 sm:text-right">{collection.description}</p>
-          </div>
-          <MainContainer list={getAnimeForCollection(collection.slug)} />
-        </section>
-      </main>
-      <Footer />
-    </div>
-  );
+  const list = getAnimeForCollection(collection.slug);
+  return <><Header title={collection.title} description={collection.description} />
+    <main className="page-surface"><section className="page-shell py-8 sm:py-12" aria-label={`${collection.title} anime`}>
+      <nav aria-label="Breadcrumb" className="breadcrumbs"><Link to="/">Archive</Link><span aria-hidden="true">/</span><Link to="/collections">Collections</Link><span aria-hidden="true">/</span><span aria-current="page">{collection.title}</span></nav>
+      <p className="mb-6 text-sm text-zinc-300">{loading ? "Loading collection…" : `${list.length} ${list.length === 1 ? "show" : "shows"} · Select a card to explore`}</p>
+      <MainContainer list={list} /><div className="mt-8"><BackButton /></div>
+    </section></main><Footer /></>;
 }
